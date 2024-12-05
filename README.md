@@ -32,3 +32,11 @@ This app is written to run as a Lambda function or as a long running service
 ## leave a channel
 you can request fomobot to remove iteself from a channel
 `curl -H Authentication: <same as AUTH_TOKEN env var" https://<fomobot>/leave?channel=<channelId>`
+
+## auth scopes
+
+* chat:write - enable fomobot to send a message, essential
+* reactions:read - get info about the reaction, self explanitory
+* channels:read - used to view how many users are in a channel, in order to adjust thresholds based on number of users
+* channels:manage - required for fomobot to remove itself from a public channel
+* groups:write - required for fomobot to remove itself from a private channel
