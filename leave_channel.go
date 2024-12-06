@@ -8,14 +8,13 @@ import (
 	"github.com/cuotos/fomobot/handler"
 )
 
-func init() {
+func LeaveChannelHandler(c handler.SlackChannelLeaver) http.HandlerFunc {
+
 	expectedToken := os.Getenv("AUTH_TOKEN")
 	if expectedToken == "" {
 		log.Printf("[ERROR] required env var AUTH_TOKEN is not set or empty, this is unsafe")
 	}
-}
 
-func LeaveChannelHandler(c handler.SlackChannelLeaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		authToken := r.Header.Get("Authentication")
