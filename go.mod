@@ -1,6 +1,7 @@
 module github.com/cuotos/fomobot
 
 go 1.21
+toolchain go1.24.1
 
 require (
 	github.com/alexliesenfeld/health v0.8.0
@@ -17,6 +18,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
