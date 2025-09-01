@@ -35,18 +35,20 @@ type SlackHandler interface {
 }
 
 type RealSlackHandler struct {
-	NotificationChannel string
-	ReactionThreshold   int
-	Database            database.Database
-	SlackClient         SlackClient
+	NotificationChannel    string
+	ReactionThreshold      int
+	Database               database.Database
+	SlackClient            SlackClient
+	SlackVerificationToken string
 }
 
-func NewRealSlackHandler(db database.Database, slackClient SlackClient, notificationChannel string, reacitonThreshold int) SlackHandler {
+func NewRealSlackHandler(db database.Database, slackClient SlackClient, notificationChannel string, reacitonThreshold int, verificationToken string) SlackHandler {
 	return &RealSlackHandler{
-		NotificationChannel: notificationChannel,
-		ReactionThreshold:   reacitonThreshold,
-		Database:            db,
-		SlackClient:         slackClient,
+		NotificationChannel:    notificationChannel,
+		ReactionThreshold:      reacitonThreshold,
+		Database:               db,
+		SlackClient:            slackClient,
+		SlackVerificationToken: verificationToken,
 	}
 }
 
@@ -65,7 +67,8 @@ func (sh *RealSlackHandler) HandleEvent(body []byte) (SlackHandlerResponse, erro
 		return resp, nil
 	}
 
-	event, err := slackevents.ParseEvent(body, slackevents.OptionNoVerifyToken()) //TODO: verify
+	slackTokenVerifierFn := slackevents.OptionVerifyToken(slackevents.TokenComparator{VerificationToken: sh.SlackVerificationToken})
+	event, err := slackevents.ParseEvent(body, slackTokenVerifierFn)
 	if err != nil {
 		resp.StatusCode = http.StatusBadRequest
 		resp.Body = []byte(err.Error())

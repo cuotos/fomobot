@@ -42,7 +42,7 @@ func TestReactionAddedEventCallsTheDBIncr(t *testing.T) {
 
 	msc := &MockSlackClient{}
 
-	handler := NewRealSlackHandler(mr, msc, "testNotificationChannelID", 3)
+	handler := NewRealSlackHandler(mr, msc, "testNotificationChannelID", 3, "")
 
 	actualResponse, err := handler.HandleEvent([]byte(mockReactionAddedEventJSON))
 	require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestSendsMessageToSlackWhenCorrectNumberOfReactionsOccured(t *testing.T) {
 		},
 	)
 
-	handler := NewRealSlackHandler(mr, msc, "testNotificationChannelID", 2)
+	handler := NewRealSlackHandler(mr, msc, "testNotificationChannelID", 2, "")
 
 	// call the handler, check if a message was sent, and reset the trigger
 	handler.HandleEvent([]byte(mockReactionAddedEventJSON))

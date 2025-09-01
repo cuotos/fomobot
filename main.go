@@ -53,6 +53,7 @@ func main() {
 		slackClient,
 		mustGetenvStr("SLACK_NOTIFICATION_CHANNEL"),
 		getenvIntWithDefault("FOMO_NOTIFICATION_COUNT_TRIGGER", defaultTriggerCount),
+		mustGetenvStr("SLACK_VERIFICATION_TOKEN"),
 	)
 
 	log.Print("[DEBUG] checking if the env var AWS_LAMBDA_RUNTIME_API exists, if it does, we are in Lambda mode, if not we are in server mode")
