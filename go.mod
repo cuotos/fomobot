@@ -1,14 +1,14 @@
 module github.com/cuotos/fomobot
 
-go 1.24
+go 1.25
 
 require (
 	github.com/alexliesenfeld/health v0.8.1
 	github.com/aws/aws-lambda-go v1.49.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/hashicorp/logutils v1.0.0
-	github.com/slack-go/slack v0.17.3
-	github.com/stretchr/testify v1.10.0
+	github.com/slack-go/slack v0.23.1
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
