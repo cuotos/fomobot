@@ -20,11 +20,9 @@ deployment:
   # Seconds the reaction count is kept before expiring. Matches the app default.
   timeout: 30
 
-# A Gateway API HTTPRoute exposing the Slack events endpoint.
+# Optional HTTPRoute for the Slack events endpoint; the gateway is cluster
+# specific, so set parentRefs yourself if you enable it.
 httpRoute:
-  enabled: true
-  parentRefs:
-    - name: gateway
-      namespace: gateway
-  hostnames:
-    - fomobot.example.com
+  enabled: false
+  parentRefs: []
+  hostnames: []
