@@ -1,0 +1,30 @@
+deployment:
+  image:
+    repository: ghcr.io/cuotos/fomobot
+    # Empty means "use the chart's appVersion", which the release workflow sets
+    # to the git tag, so a released chart points at the matching image.
+    tag: ""
+
+  # Name of an existing Secret holding AUTH_TOKEN, SLACK_TOKEN and
+  # SLACK_VERIFICATION_TOKEN. It is not created by this chart.
+  secrets: fomobot-secrets
+
+  # ID of the Slack channel fomobot posts its notifications to. Required.
+  slackNotificationChannel: ""
+
+  logLevel: INFO
+
+  # Reactions needed on a message before notifying. Matches the app default.
+  triggerCount: 5
+
+  # Seconds the reaction count is kept before expiring. Matches the app default.
+  timeout: 30
+
+# A Gateway API HTTPRoute exposing the Slack events endpoint.
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: gateway
+      namespace: gateway
+  hostnames:
+    - fomobot.example.com

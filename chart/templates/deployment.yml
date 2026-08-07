@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 100%
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: app
+          imagePullPolicy: Always
+          image: "{{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion }}"
+          ports:
+          - name: http
+            containerPort: 8080
+          env:
+            - name: LOG_LEVEL
+              value: "{{ .Values.deployment.logLevel }}"
+            - name: AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.deployment.secrets }}
+                  key: AUTH_TOKEN
+            - name: LISTEN
+              value: 0.0.0.0:8080
+            - name: REDIS_ADDR
+              value: "{{ .Release.Name }}-redis:6379"
+            - name: SLACK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.deployment.secrets }}
+                  key: SLACK_TOKEN
+            - name: SLACK_VERIFICATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.deployment.secrets }}
+                  key: SLACK_VERIFICATION_TOKEN
+            - name: SLACK_NOTIFICATION_CHANNEL
+              value: "{{ .Values.deployment.slackNotificationChannel }}"
+            - name: FOMO_NOTIFICATION_COUNT_TIMEOUT
+              value: "{{ .Values.deployment.timeout }}"
+            - name: FOMO_NOTIFICATION_COUNT_TRIGGER
+              value: "{{ .Values.deployment.triggerCount }}"

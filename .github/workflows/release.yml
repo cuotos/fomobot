@@ -1,0 +1,88 @@
+name: Release
+
+# When a release is published, add `latest`, the exact version tag, and the
+# floating major/minor tags (e.g. v1, v1.2) to the image that was already built
+# from the release's commit. This re-tags the existing manifest server-side (no
+# rebuild), so the released image is byte-identical to what was tested on main.
+on:
+  release:
+    types: [published]
+
+jobs:
+  retag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Add latest + version tags to the commit-SHA image
+        env:
+          # GHCR requires a lowercase image path.
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          IMAGE="ghcr.io/${REPO,,}"
+
+          # Always apply the exact version tag (e.g. v1.2.3).
+          TAGS=(--tag "${IMAGE}:${VERSION}")
+
+          # For a clean semver release (vMAJOR.MINOR.PATCH, no pre-release/build
+          # suffix) also move the floating major/minor pointers and `latest`, so
+          # users can pin to v1 or v1.2. Pre-releases keep only their exact tag.
+          if [[ "${VERSION}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR="v${BASH_REMATCH[1]}"
+            MINOR="v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+            TAGS+=(--tag "${IMAGE}:${MAJOR}")
+            TAGS+=(--tag "${IMAGE}:${MINOR}")
+            TAGS+=(--tag "${IMAGE}:latest")
+          else
+            echo "Pre-release/non-semver tag ${VERSION}; tagging exact version only"
+          fi
+
+          echo "Re-tagging ${IMAGE}:${SHA} as: ${TAGS[*]}"
+          docker buildx imagetools create "${TAGS[@]}" "${IMAGE}:${SHA}"
+
+      - uses: azure/setup-helm@v5
+
+      - name: Package and push the Helm chart to GHCR (OCI)
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TAG: ${{ github.event.release.tag_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Helm chart versions must be SemVer without a leading "v"; the app
+          # version (= the image tag the chart defaults to) keeps the tag verbatim.
+          CHART_VERSION="${TAG#v}"
+          OCI="oci://ghcr.io/${OWNER,,}/charts"
+
+          # Read the name from Chart.yaml rather than hardcoding it, so the
+          # packaged filename below can never drift from the chart itself.
+          CHART_NAME="$(helm show chart chart | awk '$1 == "name:" {print $2}')"
+
+          helm lint chart
+
+          echo "${GITHUB_TOKEN}" | helm registry login ghcr.io \
+            --username "${{ github.actor }}" --password-stdin
+
+          helm package chart \
+            --version "${CHART_VERSION}" \
+            --app-version "${TAG}" \
+            --destination .
+
+          PACKAGE="${CHART_NAME}-${CHART_VERSION}.tgz"
+          echo "Pushing ${PACKAGE} to ${OCI}"
+          helm push "${PACKAGE}" "${OCI}"

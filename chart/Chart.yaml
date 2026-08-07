@@ -1,0 +1,8 @@
+apiVersion: v2
+name: fomobot
+description: Slack bot that notifies you when a message gets enough emoji reactions
+type: application
+# Both are overridden at release time: the workflow passes --version and
+# --app-version derived from the git tag.
+version: 0.0.0-alpha.1
+appVersion: "0.0.0-alpha.1"

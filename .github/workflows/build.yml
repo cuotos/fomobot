@@ -25,6 +25,17 @@ jobs:
       - run: go vet ./...
       - run: go test ./...
 
+  # Check the chart on every push and PR, so one that cannot template is caught
+  # here rather than when a release tries to publish it.
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+
+      # lint renders the templates, so a broken template fails here.
+      - run: helm lint chart
+
   # Build the image and push it to GHCR tagged with the commit SHA.
   # Runs only on pushes to main (not on pull requests).
   image:

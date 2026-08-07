@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Release.Name }}-redis"
+  labels:
+    app: redis
+spec:
+  replicas: 1 # can only be one as we are not running a redis cluster here
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 100%
+  selector:
+    matchLabels:
+      app: "{{ .Release.Name }}-redis"
+  template:
+    metadata:
+      labels:
+        app: "{{ .Release.Name }}-redis"
+      # annotations:
+      #   ad.datadoghq.com/dependash.logs: '[{"source":"lighttpd"}]'
+      #   ad.datadoghq.com/oauth-proxy.logs: '[{"service":"dependash", "source":"plain"}]'
+    spec:
+      containers:
+        - name: app
+          image: redis
+          ports:
+            - name: tcp
+              containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Release.Name }}-redis"
+spec:
+  selector:
+    app: "{{ .Release.Name }}-redis"
+  ports:
+    - name: tcp
+      port: 6379
+      targetPort: tcp
