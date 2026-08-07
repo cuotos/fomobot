@@ -74,5 +74,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Without this, buildx attaches a provenance attestation that shows up
+          # in the registry as a bogus "unknown/unknown" platform entry.
+          provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
