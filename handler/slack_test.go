@@ -11,14 +11,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// the token that the mock event payloads below claim to have come from Slack with
+const testVerificationToken = "test-verification-token"
+
 func TestURLVerificationRequest(t *testing.T) {
 	mockChallengeBody := []byte(`{
-		"token": "Jhj5dZrVaK7ZwHHjRyZWjbDl",
+		"token": "test-verification-token",
 		"challenge": "3eZbrw1aBm2rZgRNXXXXXXXXX9CY3gmdALWMmHkvFXO7tYXAYM8P",
 		"type": "url_verification"
 	}`)
 
-	handler := &RealSlackHandler{}
+	handler := &RealSlackHandler{SlackVerificationToken: testVerificationToken}
 	actualResponse, err := handler.HandleEvent(mockChallengeBody)
 
 	require.NoError(t, err)
@@ -42,7 +45,7 @@ func TestReactionAddedEventCallsTheDBIncr(t *testing.T) {
 
 	msc := &MockSlackClient{}
 
-	handler := NewRealSlackHandler(mr, msc, "testNotificationChannelID", 3, "")
+	handler := NewRealSlackHandler(mr, msc, "testNotificationChannelID", 3, testVerificationToken)
 
 	actualResponse, err := handler.HandleEvent([]byte(mockReactionAddedEventJSON))
 	require.NoError(t, err)
@@ -68,7 +71,7 @@ func TestSendsMessageToSlackWhenCorrectNumberOfReactionsOccured(t *testing.T) {
 		},
 	)
 
-	handler := NewRealSlackHandler(mr, msc, "testNotificationChannelID", 2, "")
+	handler := NewRealSlackHandler(mr, msc, "testNotificationChannelID", 2, testVerificationToken)
 
 	// call the handler, check if a message was sent, and reset the trigger
 	handler.HandleEvent([]byte(mockReactionAddedEventJSON))
@@ -82,6 +85,27 @@ func TestSendsMessageToSlackWhenCorrectNumberOfReactionsOccured(t *testing.T) {
 	handler.HandleEvent([]byte(mockReactionAddedEventJSON))
 	assert.False(t, msc.messageSent)
 	msc.messageSent = false
+}
+
+func TestRejectsEventWithInvalidVerificationToken(t *testing.T) {
+	incrCalled := false
+	mr := NewMockDB(
+		func(_ string) (int, error) {
+			incrCalled = true
+			return 1, nil
+		},
+	)
+
+	msc := &MockSlackClient{}
+
+	handler := NewRealSlackHandler(mr, msc, "testNotificationChannelID", 1, "a-different-token")
+
+	actualResponse, err := handler.HandleEvent([]byte(mockReactionAddedEventJSON))
+
+	require.Error(t, err)
+	assert.Equal(t, http.StatusBadRequest, actualResponse.StatusCode)
+	assert.False(t, incrCalled, "the event should be rejected before the database is touched")
+	assert.False(t, msc.messageSent)
 }
 
 type MockSlackClient struct {
@@ -107,7 +131,7 @@ func (msc *MockSlackClient) LeaveConversation(_ string) (bool, error) {
 
 var mockReactionAddedEventJSON = `
 {
-  "token":"jkVTna0zzT7SDuwLHQyEIsjy",
+  "token":"test-verification-token",
   "team_id":"T01XXXXKPC",
   "api_app_id":"A02NTAM71KJ",
   "event":{

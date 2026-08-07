@@ -29,6 +29,26 @@ This app is written to run as a Lambda function or as a long running service
 - deploy
 `GOOS=linux go build -o main && zip function.zip main &&  av exec personal -- aws lambda  update-function-code --function-name fomobot --zip-file fileb://function.zip`
 
+## configuration
+
+Configured entirely through env vars. The app exits on startup if a required one is missing.
+
+| Env var | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `SLACK_TOKEN` | yes | | Slack API token used to read reactions and post messages |
+| `SLACK_VERIFICATION_TOKEN` | yes | | Slack app verification token; incoming events whose token does not match are rejected |
+| `SLACK_NOTIFICATION_CHANNEL` | yes | | ID of the channel fomobot posts notifications to |
+| `REDIS_ADDR` | yes | | Redis address used to count reactions |
+| `REDIS_PASSWORD` | no | *(empty)* | Redis password |
+| `REDIS_DB` | no | `0` | Redis database number |
+| `FOMO_NOTIFICATION_COUNT_TRIGGER` | no | `5` | Reactions needed on a message before notifying |
+| `FOMO_NOTIFICATION_COUNT_TIMEOUT` | no | `30` | Seconds the reaction count is kept before expiring |
+| `AUTH_TOKEN` | no | *(empty)* | Token required by the `/leave` endpoint below |
+| `LISTEN` | no | `0.0.0.0:8080` | Listen address in server mode (ignored in Lambda) |
+| `LOG_LEVEL` | no | `INFO` | Minimum level to log, in increasing order: `TRACE`, `DEBUG`, `WARN`, `INFO`, `ERROR` |
+
+The verification token is found under "Basic Information" → "App Credentials" in the Slack app admin page.
+
 ## leave a channel
 you can request fomobot to remove iteself from a channel
 `curl -H Authentication: <same as AUTH_TOKEN env var" https://<fomobot>/leave?channel=<channelId>`
