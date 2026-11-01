@@ -5,6 +5,9 @@ deployment:
     # to the git tag, so a released chart points at the matching image.
     tag: ""
 
+  # Number of fomobot pods. Redis always runs as a single pod.
+  replicas: 2
+
   # Name of an existing Secret holding AUTH_TOKEN, SLACK_TOKEN and
   # SLACK_VERIFICATION_TOKEN. It is not created by this chart.
   secrets: fomobot-secrets
